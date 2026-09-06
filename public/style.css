@@ -454,3 +454,21 @@ body {
 	background: #ddd9cc;
 	border-radius: 4px;
 }
+
+/* --- ドラッグ・長押し操作の誤作動防止スタイル --- */
+.item-row {
+	-webkit-user-select: none; /* iOS Safari用：長押し時の文字選択を無効化 */
+	user-select: none; /* 長押し時の文字選択を無効化 */
+	-webkit-touch-callout: none; /* 長押しメニューのポップアップを無効化 */
+}
+
+/* ドラッグ中の見た目 */
+.item-row.dragging {
+	opacity: 0.4;
+	background-color: #e0e7ff;
+}
+
+/* ドロップ位置の目安線 */
+.item-row.drag-over {
+	border-top: 2px solid #4f46e5;
+}
