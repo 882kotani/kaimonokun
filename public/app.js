@@ -23,7 +23,10 @@ let template = [];
 let lastItemsJson = '';
 let editingItemId = null;
 let editingTemplateId = null;
+
+// ドラッグ状態管理
 let draggedIndex = null;
+let touchDraggedIndex = null;
 
 function setSyncOk(ok) {
 	syncStatusEl.textContent = ok ? '同期中' : '同期エラー';
@@ -57,6 +60,7 @@ function buildListRow(it, index) {
 	row.className = 'item-row' + (it.checked ? ' checked-row' : '');
 	row.draggable = true;
 
+	// --- PC用ドラッグ＆ドロップ (マウス操作) ---
 	row.addEventListener('dragstart', (e) => {
 		draggedIndex = index;
 		row.classList.add('dragging');
@@ -88,6 +92,56 @@ function buildListRow(it, index) {
 	row.addEventListener('dragend', () => {
 		row.classList.remove('dragging');
 		document.querySelectorAll('.item-row').forEach((r) => r.classList.remove('drag-over'));
+	});
+
+	// --- スマホ用ドラッグ＆ドロップ (タッチ操作) ---
+	row.addEventListener(
+		'touchstart',
+		(e) => {
+			// ボタンやチェックボックス、入力欄の操作時はドラッグを開始しない
+			if (e.target.closest('.checkbox, .qty-control, .edit-btn, .trash, button, input')) return;
+			touchDraggedIndex = index;
+			row.classList.add('dragging');
+		},
+		{ passive: true },
+	);
+
+	row.addEventListener(
+		'touchmove',
+		(e) => {
+			if (touchDraggedIndex === null) return;
+			const touch = e.touches[0];
+			const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+			const targetRow = targetEl ? targetEl.closest('.item-row') : null;
+
+			document.querySelectorAll('.item-row').forEach((r) => r.classList.remove('drag-over'));
+			if (targetRow && targetRow !== row) {
+				targetRow.classList.add('drag-over');
+			}
+		},
+		{ passive: true },
+	);
+
+	row.addEventListener('touchend', async (e) => {
+		if (touchDraggedIndex === null) return;
+		row.classList.remove('dragging');
+
+		const changedTouch = e.changedTouches[0];
+		const targetEl = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+		const targetRow = targetEl ? targetEl.closest('.item-row') : null;
+
+		document.querySelectorAll('.item-row').forEach((r) => r.classList.remove('drag-over'));
+
+		if (targetRow) {
+			const targetIndex = Array.from(listItemsEl.children).indexOf(targetRow);
+			if (targetIndex !== -1 && touchDraggedIndex !== targetIndex) {
+				const [movedItem] = items.splice(touchDraggedIndex, 1);
+				items.splice(targetIndex, 0, movedItem);
+				renderBoard();
+				await saveReorder();
+			}
+		}
+		touchDraggedIndex = null;
 	});
 
 	if (editingItemId === it.id) {
