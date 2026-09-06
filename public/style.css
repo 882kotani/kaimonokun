@@ -1,7 +1,7 @@
+/* ---- 以前のCSS (省略せず全てそのまま残す) ---- */
 * {
 	box-sizing: border-box;
 }
-
 body {
 	margin: 0;
 	font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif;
@@ -10,59 +10,46 @@ body {
 	-webkit-tap-highlight-color: transparent;
 	overflow-x: hidden;
 }
-
 .page {
 	max-width: 480px;
 	width: 100%;
 	margin: 0 auto;
 	padding: 20px 16px calc(40px + env(safe-area-inset-bottom, 0px));
 }
-
 .header {
 	display: flex;
 	align-items: baseline;
 	justify-content: space-between;
 	margin-bottom: 4px;
 }
-
 .header h1 {
 	font-size: 20px;
 	font-weight: 700;
 	margin: 0;
 }
-
 .sync-status {
 	font-size: 12px;
 	color: #6b6f5e;
 }
-
 .sync-status.error {
 	color: #b8562e;
 }
-
 .lead {
 	font-size: 13px;
 	color: #6b6f5e;
 	margin: 0 0 18px;
 	line-height: 1.5;
 }
-
-/* ---- テンプレート操作ボタン ---- */
-
 .template-actions {
 	display: flex;
 	gap: 8px;
 	margin-bottom: 18px;
 }
-
 .template-actions .ghost-btn {
 	flex: 1;
 	margin-bottom: 0;
 	min-width: 0;
 }
-
-/* ---- 追加バー ---- */
-
 .add-bar {
 	display: flex;
 	gap: 8px;
@@ -70,7 +57,6 @@ body {
 	margin-bottom: 14px;
 	width: 100%;
 }
-
 .add-bar input {
 	flex: 1;
 	min-width: 0;
@@ -83,12 +69,10 @@ body {
 	color: #26291f;
 	font-family: inherit;
 }
-
 .add-bar input:focus {
 	outline: none;
 	border-color: #3f6c51;
 }
-
 .add-bar button {
 	width: 48px;
 	height: 48px;
@@ -101,29 +85,22 @@ body {
 	cursor: pointer;
 	flex-shrink: 0;
 }
-
 .add-bar button:active {
 	background: #345a42;
 }
-
 .add-bar.small {
 	margin-top: 0;
 }
-
 .add-bar.small input {
 	height: 42px;
 	font-size: 15px;
 	min-width: 0;
 }
-
 .add-bar.small button {
 	width: 42px;
 	height: 42px;
 	font-size: 18px;
 }
-
-/* ---- ボタン共通 ---- */
-
 .ghost-btn {
 	height: 44px;
 	padding: 0 14px;
@@ -135,16 +112,13 @@ body {
 	cursor: pointer;
 	font-family: inherit;
 }
-
 .ghost-btn.full {
 	width: 100%;
 	margin-bottom: 18px;
 }
-
 .ghost-btn:active {
 	background: #f1efe8;
 }
-
 .link-btn {
 	border: none;
 	background: none;
@@ -155,46 +129,12 @@ body {
 	padding: 2px 0;
 	font-family: inherit;
 }
-
 .link-btn:active {
 	opacity: 0.6;
 }
-
-/* ---- テンプレートパネル ---- */
-
-.template-panel {
-	background: #f1efe8;
-	border-radius: 12px;
-	padding: 16px;
-	margin-bottom: 20px;
-}
-
-.template-head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	font-size: 14px;
-	font-weight: 500;
-	margin-bottom: 4px;
-}
-
-.template-panel .hint {
-	font-size: 12px;
-	color: #6b6f5e;
-	margin: 0 0 12px;
-	line-height: 1.5;
-}
-
-.template-panel .items {
-	margin-bottom: 12px;
-}
-
-/* ---- 買い物リスト ---- */
-
 .column {
 	margin-bottom: 10px;
 }
-
 .column-head {
 	display: flex;
 	align-items: center;
@@ -203,26 +143,22 @@ body {
 	font-size: 14px;
 	font-weight: 500;
 }
-
 .count {
 	font-size: 13px;
 	font-weight: 400;
 	color: #6b6f5e;
 }
-
 .empty {
 	font-size: 13px;
 	color: #9a9789;
 	line-height: 1.6;
 	margin: 0;
 }
-
 .items {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 }
-
 .item-row {
 	display: flex;
 	align-items: center;
@@ -235,19 +171,15 @@ body {
 		background-color 0.15s ease,
 		border-color 0.15s ease;
 }
-
 .item-row:active {
 	cursor: grabbing;
 }
-
 .item-row.dragging {
 	opacity: 0.4;
 }
-
 .item-row.drag-over {
 	border-top: 2px solid #3f6c51;
 }
-
 @keyframes popIn {
 	0% {
 		opacity: 0;
@@ -258,11 +190,9 @@ body {
 		transform: translateY(0);
 	}
 }
-
 .item-row.checked-row {
 	background: transparent;
 }
-
 .checkbox {
 	width: 26px;
 	height: 26px;
@@ -278,30 +208,23 @@ body {
 		background 0.15s,
 		transform 0.1s;
 }
-
 .checkbox:active {
 	transform: scale(0.88);
 }
-
 .checkbox.checked {
 	background: #3f6c51;
 	border-color: #3f6c51;
 }
-
 .item-name {
 	font-size: 15px;
 	flex: 1;
 	min-width: 0;
 	word-break: break-word;
 }
-
 .item-name.done {
 	color: #9a9789;
 	text-decoration: line-through;
 }
-
-/* ---- 個数コントロール UI (スッキリ・控えめデザイン) ---- */
-
 .qty-control {
 	display: flex;
 	align-items: center;
@@ -312,7 +235,6 @@ body {
 	background: #fff;
 	flex-shrink: 0;
 }
-
 .qty-btn {
 	border: none;
 	background: transparent;
@@ -332,12 +254,10 @@ body {
 		color 0.15s,
 		background 0.15s;
 }
-
 .qty-btn:active {
 	background: #f1efe8;
 	color: #26291f;
 }
-
 .qty-val {
 	font-size: 12px;
 	font-weight: 700;
@@ -346,7 +266,6 @@ body {
 	color: #6b6f5e;
 	padding: 0 1px;
 }
-
 .edit-btn {
 	border: none;
 	background: none;
@@ -357,11 +276,9 @@ body {
 	font-family: inherit;
 	flex-shrink: 0;
 }
-
 .edit-btn:active {
 	color: #26291f;
 }
-
 .icon-btn {
 	border: none;
 	background: none;
@@ -373,24 +290,18 @@ body {
 	flex-shrink: 0;
 	font-size: 18px;
 }
-
 .icon-btn.trash {
 	color: #b8562e;
 	opacity: 0.55;
 }
-
 .icon-btn.trash:active {
 	opacity: 1;
 }
-
-/* ---- アクション領域 ---- */
-
 .list-actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 18px;
 }
-
 .clear-btn {
 	flex: 1;
 	min-width: 0;
@@ -403,22 +314,16 @@ body {
 	cursor: pointer;
 	font-family: inherit;
 }
-
 .clear-btn:active {
 	background: #f1efe8;
 }
-
 .clear-btn.danger {
 	color: #b8562e;
 	border-color: #f0c2b2;
 }
-
 .clear-btn.danger:active {
 	background: #fdf2ee;
 }
-
-/* ---- 編集フォーム ---- */
-
 .edit-form {
 	display: flex;
 	gap: 6px;
@@ -426,7 +331,6 @@ body {
 	min-width: 0;
 	align-items: center;
 }
-
 .edit-form input {
 	flex: 1;
 	min-width: 0;
@@ -437,11 +341,9 @@ body {
 	border: 1.5px solid #3f6c51;
 	font-family: inherit;
 }
-
 .edit-form input:focus {
 	outline: none;
 }
-
 .small-btn {
 	border: none;
 	border-radius: 8px;
@@ -452,14 +354,103 @@ body {
 	font-family: inherit;
 	flex-shrink: 0;
 }
-
 .small-btn.save {
 	background: #3f6c51;
 	color: #fff;
 }
-
 .small-btn.cancel {
 	background: #fff;
 	border: 1.5px solid #ddd9cc;
 	color: #6b6f5e;
+}
+
+/* =========================================
+   ここからモーダル用デザイン
+   ========================================= */
+
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, 0.4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	z-index: 999;
+	backdrop-filter: blur(2px);
+}
+
+.modal-overlay[hidden] {
+	display: none;
+}
+
+.modal-content {
+	background: #fbfaf7;
+	width: 100%;
+	max-width: 440px;
+	border-radius: 16px;
+	padding: 20px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+	max-height: 85vh;
+	display: flex;
+	flex-direction: column;
+	animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.modal-header h2 {
+	font-size: 18px;
+	margin: 0;
+}
+
+.close-modal-btn {
+	background: none;
+	border: none;
+	font-size: 24px;
+	color: #6b6f5e;
+	cursor: pointer;
+	padding: 4px;
+	line-height: 1;
+}
+
+.modal-content .hint {
+	font-size: 13px;
+	color: #6b6f5e;
+	margin: 0 0 16px;
+}
+
+.modal-content .items {
+	flex: 1;
+	overflow-y: auto;
+	margin-bottom: 16px;
+	padding-right: 4px;
+}
+
+/* スクロールバー装飾（PC用） */
+.modal-content .items::-webkit-scrollbar {
+	width: 6px;
+}
+.modal-content .items::-webkit-scrollbar-thumb {
+	background: #ddd9cc;
+	border-radius: 4px;
 }

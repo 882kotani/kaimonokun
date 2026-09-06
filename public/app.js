@@ -9,8 +9,10 @@ const clearCartBtn = document.getElementById('clearCartBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
 const syncStatusEl = document.getElementById('syncStatus');
 
-const toggleTemplateBtn = document.getElementById('toggleTemplateBtn');
-const templatePanel = document.getElementById('templatePanel');
+// モーダル用要素
+const openTemplateBtn = document.getElementById('openTemplateBtn');
+const closeTemplateBtn = document.getElementById('closeTemplateBtn');
+const templateModal = document.getElementById('templateModal');
 const templateItemsEl = document.getElementById('templateItems');
 const templateAddForm = document.getElementById('templateAddForm');
 const templateAddInput = document.getElementById('templateAddInput');
@@ -28,7 +30,6 @@ function setSyncOk(ok) {
 	syncStatusEl.classList.toggle('error', !ok);
 }
 
-// 未購入を上、購入済みを下に並び替える
 function sortItemsByChecked() {
 	const unchecked = items.filter((it) => !it.checked);
 	const checked = items.filter((it) => it.checked);
@@ -112,13 +113,12 @@ function buildListRow(it, index) {
 	name.className = 'item-name' + (it.checked ? ' done' : '');
 	name.textContent = it.name;
 
-	// 個数アップダウン UI
 	const qtyControl = document.createElement('div');
 	qtyControl.className = 'qty-control';
 
 	const minusBtn = document.createElement('button');
 	minusBtn.className = 'qty-btn minus';
-	minusBtn.textContent = '－';
+	minusBtn.textContent = '−';
 	minusBtn.setAttribute('aria-label', `${it.name}の個数を減らす`);
 	minusBtn.addEventListener('click', (e) => {
 		e.stopPropagation();
@@ -207,7 +207,7 @@ function buildEditForm(it) {
 	return form;
 }
 
-// ================== 買い物リスト API 呼び出し ==================
+// ================== 買い物リスト API ==================
 
 async function fetchItems() {
 	try {
@@ -347,7 +347,7 @@ async function clearAllItems() {
 	}
 }
 
-// ================== テンプレート 描画 ==================
+// ================== テンプレート モーダル 描画 ==================
 
 function renderTemplate() {
 	templateItemsEl.innerHTML = '';
@@ -429,7 +429,7 @@ function buildTemplateRow(tpl) {
 	return row;
 }
 
-// ================== テンプレート API 呼び出し ==================
+// ================== テンプレート API ==================
 
 async function fetchTemplate() {
 	try {
@@ -504,11 +504,21 @@ addForm.addEventListener('submit', (e) => {
 clearCartBtn.addEventListener('click', clearPurchased);
 clearAllBtn.addEventListener('click', clearAllItems);
 
-toggleTemplateBtn.addEventListener('click', () => {
-	const isHidden = templatePanel.hidden;
-	templatePanel.hidden = !isHidden;
-	toggleTemplateBtn.textContent = isHidden ? 'テンプレートを閉じる' : 'テンプレートを編集';
-	if (isHidden) fetchTemplate();
+// モーダル操作
+openTemplateBtn.addEventListener('click', () => {
+	templateModal.hidden = false;
+	fetchTemplate();
+});
+
+closeTemplateBtn.addEventListener('click', () => {
+	templateModal.hidden = true;
+});
+
+// モーダルの背景クリックで閉じる
+templateModal.addEventListener('click', (e) => {
+	if (e.target === templateModal) {
+		templateModal.hidden = true;
+	}
 });
 
 templateAddForm.addEventListener('submit', (e) => {
@@ -519,7 +529,11 @@ templateAddForm.addEventListener('submit', (e) => {
 	addTemplateItem(name);
 });
 
-copyTemplateBtn.addEventListener('click', copyTemplateToList);
+copyTemplateBtn.addEventListener('click', () => {
+	if (confirm('テンプレートの項目をリストに追加しますか？')) {
+		copyTemplateToList();
+	}
+});
 
 // ================== 初期化 ==================
 
