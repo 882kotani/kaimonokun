@@ -46,10 +46,13 @@ app.post('/api/items', (req, res) => {
 	if (!name) {
 		return res.status(400).json({ error: '商品名を入力してください。' });
 	}
+	const quantity =
+		typeof req.body?.quantity === 'number' && req.body.quantity > 0 ? req.body.quantity : 1;
 	const items = readItems();
 	const newItem = {
 		id: crypto.randomUUID(),
 		name,
+		quantity,
 		checked: false,
 		createdAt: Date.now(),
 	};
@@ -67,7 +70,7 @@ app.put('/api/items/reorder', (req, res) => {
 	res.json(req.body);
 });
 
-// チェック状態の切り替え、または名前の編集
+// チェック状態の切り替え、名前の編集、または個数の変更
 app.patch('/api/items/:id', (req, res) => {
 	const items = readItems();
 	const item = items.find((it) => it.id === req.params.id);
@@ -83,6 +86,9 @@ app.patch('/api/items/:id', (req, res) => {
 			return res.status(400).json({ error: '商品名を入力してください。' });
 		}
 		item.name = trimmed;
+	}
+	if (typeof req.body?.quantity === 'number' && req.body.quantity > 0) {
+		item.quantity = req.body.quantity;
 	}
 	writeItems(items);
 	res.json(item);
@@ -104,7 +110,7 @@ app.post('/api/cart/clear', (req, res) => {
 	res.json(next);
 });
 
-// 買い物リストを全件削除（追加機能）
+// 買い物リストを全件削除
 app.delete('/api/items', (req, res) => {
 	writeItems([]);
 	res.status(204).end();
@@ -154,17 +160,17 @@ app.delete('/api/template/:id', (req, res) => {
 	res.status(204).end();
 });
 
-// テンプレートを買い物リストにコピー（未チェックの新規アイテムとして追加）
+// テンプレートを買い物リストにコピー
 app.post('/api/template/copy', (req, res) => {
 	const template = readTemplate();
 	const items = readItems();
 	const existingNames = new Set(items.map((it) => it.name));
 	template.forEach((tpl) => {
-		// 同名の未購入アイテムが既にある場合は重複追加しない
 		if (existingNames.has(tpl.name)) return;
 		items.push({
 			id: crypto.randomUUID(),
 			name: tpl.name,
+			quantity: tpl.quantity || 1,
 			checked: false,
 			createdAt: Date.now(),
 		});

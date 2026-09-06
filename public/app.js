@@ -112,6 +112,40 @@ function buildListRow(it, index) {
 	name.className = 'item-name' + (it.checked ? ' done' : '');
 	name.textContent = it.name;
 
+	// 個数アップダウン UI
+	const qtyControl = document.createElement('div');
+	qtyControl.className = 'qty-control';
+
+	const minusBtn = document.createElement('button');
+	minusBtn.className = 'qty-btn minus';
+	minusBtn.textContent = '－';
+	minusBtn.setAttribute('aria-label', `${it.name}の個数を減らす`);
+	minusBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const currentQty = it.quantity || 1;
+		if (currentQty > 1) {
+			updateQuantity(it.id, currentQty - 1);
+		}
+	});
+
+	const qtyVal = document.createElement('span');
+	qtyVal.className = 'qty-val';
+	qtyVal.textContent = String(it.quantity || 1);
+
+	const plusBtn = document.createElement('button');
+	plusBtn.className = 'qty-btn plus';
+	plusBtn.textContent = '＋';
+	plusBtn.setAttribute('aria-label', `${it.name}の個数を増やす`);
+	plusBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const currentQty = it.quantity || 1;
+		updateQuantity(it.id, currentQty + 1);
+	});
+
+	qtyControl.appendChild(minusBtn);
+	qtyControl.appendChild(qtyVal);
+	qtyControl.appendChild(plusBtn);
+
 	const editBtn = document.createElement('button');
 	editBtn.className = 'edit-btn';
 	editBtn.textContent = '編集';
@@ -128,6 +162,7 @@ function buildListRow(it, index) {
 
 	row.appendChild(box);
 	row.appendChild(name);
+	row.appendChild(qtyControl);
 	row.appendChild(editBtn);
 	row.appendChild(trash);
 	return row;
@@ -202,6 +237,22 @@ async function addItem(name) {
 		if (!res.ok) throw new Error('failed');
 		lastItemsJson = '';
 		await fetchItems();
+	} catch (e) {
+		setSyncOk(false);
+	}
+}
+
+async function updateQuantity(id, quantity) {
+	items = items.map((it) => (it.id === id ? { ...it, quantity } : it));
+	renderBoard();
+	try {
+		const res = await fetch(`/api/items/${id}`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ quantity }),
+		});
+		if (!res.ok) throw new Error('failed');
+		await saveReorder();
 	} catch (e) {
 		setSyncOk(false);
 	}
