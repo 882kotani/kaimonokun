@@ -28,6 +28,13 @@ function setSyncOk(ok) {
 	syncStatusEl.classList.toggle('error', !ok);
 }
 
+// 未購入を上、購入済みを下に並び替える
+function sortItemsByChecked() {
+	const unchecked = items.filter((it) => !it.checked);
+	const checked = items.filter((it) => it.checked);
+	items = [...unchecked, ...checked];
+}
+
 // ================== 買い物リスト 描画 ==================
 
 function renderBoard() {
@@ -175,7 +182,8 @@ async function fetchItems() {
 		const json = JSON.stringify(data);
 		if (json !== lastItemsJson) {
 			items = data;
-			lastItemsJson = json;
+			sortItemsByChecked();
+			lastItemsJson = JSON.stringify(items);
 			renderBoard();
 		}
 		setSyncOk(true);
@@ -216,6 +224,7 @@ async function saveReorder() {
 
 async function toggleItem(id, checked) {
 	items = items.map((it) => (it.id === id ? { ...it, checked } : it));
+	sortItemsByChecked();
 	renderBoard();
 	try {
 		const res = await fetch(`/api/items/${id}`, {
@@ -224,8 +233,7 @@ async function toggleItem(id, checked) {
 			body: JSON.stringify({ checked }),
 		});
 		if (!res.ok) throw new Error('failed');
-		lastItemsJson = '';
-		await fetchItems();
+		await saveReorder();
 	} catch (e) {
 		setSyncOk(false);
 	}

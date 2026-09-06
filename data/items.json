@@ -1,11 +1,5 @@
 [
   {
-    "id": "42500408-32f9-4595-a230-119a781db7e2",
-    "name": "牛乳",
-    "checked": false,
-    "createdAt": 1788655197806
-  },
-  {
     "id": "288a8a0e-6def-4a47-bc81-7620f1166bdb",
     "name": "卵",
     "checked": false,
@@ -27,6 +21,12 @@
     "id": "c8add79f-6a90-47e3-970b-49db1febde36",
     "name": "あ",
     "checked": false,
+    "createdAt": 1788655197806
+  },
+  {
+    "id": "42500408-32f9-4595-a230-119a781db7e2",
+    "name": "牛乳",
+    "checked": true,
     "createdAt": 1788655197806
   }
 ]

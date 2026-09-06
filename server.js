@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const ITEMS_FILE = path.join(__dirname, 'data', 'items.json');
 const TEMPLATE_FILE = path.join(__dirname, 'data', 'template.json');
 
