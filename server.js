@@ -5,178 +5,149 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const ITEMS_FILE = path.join(__dirname, 'data', 'items.json');
-const TEMPLATE_FILE = path.join(__dirname, 'data', 'template.json');
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// ファイルパス定義
+const DATA_DIR = path.join(__dirname, 'data');
+const ITEMS_PATH = path.join(DATA_DIR, 'items.json');
+const TEMPLATE_PATH = path.join(DATA_DIR, 'template.json');
 
-// ---- 共通のファイル読み書き ----
+// data フォルダが存在しない場合は自動作成
+if (!fs.existsSync(DATA_DIR)) {
+	fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
-function readJson(file) {
+// JSONファイル読み込み用ヘルパー
+function readJson(filePath) {
+	if (!fs.existsSync(filePath)) return [];
 	try {
-		const raw = fs.readFileSync(file, 'utf-8');
-		const parsed = JSON.parse(raw);
-		return Array.isArray(parsed) ? parsed : [];
+		return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 	} catch (e) {
 		return [];
 	}
 }
 
-function writeJson(file, data) {
-	fs.mkdirSync(path.dirname(file), { recursive: true });
-	fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+// JSONファイル書き込み用ヘルパー
+function writeJson(filePath, data) {
+	fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-const readItems = () => readJson(ITEMS_FILE);
-const writeItems = (data) => writeJson(ITEMS_FILE, data);
-const readTemplate = () => readJson(TEMPLATE_FILE);
-const writeTemplate = (data) => writeJson(TEMPLATE_FILE, data);
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ================== 買い物リスト API ==================
 
-// 一覧取得
 app.get('/api/items', (req, res) => {
-	res.json(readItems());
+	res.json(readJson(ITEMS_PATH));
 });
 
-// 追加
 app.post('/api/items', (req, res) => {
-	const name = (req.body?.name || '').trim();
-	if (!name) {
-		return res.status(400).json({ error: '商品名を入力してください。' });
-	}
-	const quantity =
-		typeof req.body?.quantity === 'number' && req.body.quantity > 0 ? req.body.quantity : 1;
-	const items = readItems();
+	const items = readJson(ITEMS_PATH);
 	const newItem = {
 		id: crypto.randomUUID(),
-		name,
-		quantity,
+		name: req.body.name,
+		quantity: 1,
 		checked: false,
-		createdAt: Date.now(),
 	};
 	items.push(newItem);
-	writeItems(items);
-	res.status(201).json(newItem);
+	writeJson(ITEMS_PATH, items);
+	res.json(newItem);
 });
 
-// 並び替え（一括更新）
 app.put('/api/items/reorder', (req, res) => {
-	if (!Array.isArray(req.body)) {
-		return res.status(400).json({ error: '配列形式で送信してください。' });
-	}
-	writeItems(req.body);
+	writeJson(ITEMS_PATH, req.body);
 	res.json(req.body);
 });
 
-// チェック状態の切り替え、名前の編集、または個数の変更
 app.patch('/api/items/:id', (req, res) => {
-	const items = readItems();
-	const item = items.find((it) => it.id === req.params.id);
-	if (!item) {
-		return res.status(404).json({ error: 'アイテムが見つかりません。' });
-	}
-	if (typeof req.body?.checked === 'boolean') {
-		item.checked = req.body.checked;
-	}
-	if (typeof req.body?.name === 'string') {
-		const trimmed = req.body.name.trim();
-		if (!trimmed) {
-			return res.status(400).json({ error: '商品名を入力してください。' });
+	let items = readJson(ITEMS_PATH);
+	items = items.map((it) => {
+		if (it.id === req.params.id) {
+			return { ...it, ...req.body };
 		}
-		item.name = trimmed;
-	}
-	if (typeof req.body?.quantity === 'number' && req.body.quantity > 0) {
-		item.quantity = req.body.quantity;
-	}
-	writeItems(items);
-	res.json(item);
+		return it;
+	});
+	writeJson(ITEMS_PATH, items);
+	res.json({ ok: true });
 });
 
-// 1件削除
 app.delete('/api/items/:id', (req, res) => {
-	const items = readItems();
-	const next = items.filter((it) => it.id !== req.params.id);
-	writeItems(next);
-	res.status(204).end();
+	let items = readJson(ITEMS_PATH);
+	items = items.filter((it) => it.id !== req.params.id);
+	writeJson(ITEMS_PATH, items);
+	res.json({ ok: true });
 });
 
-// 購入済み（チェック済み）を一括削除
-app.post('/api/cart/clear', (req, res) => {
-	const items = readItems();
-	const next = items.filter((it) => !it.checked);
-	writeItems(next);
-	res.json(next);
-});
-
-// 買い物リストを全件削除
 app.delete('/api/items', (req, res) => {
-	writeItems([]);
-	res.status(204).end();
+	writeJson(ITEMS_PATH, []);
+	res.json({ ok: true });
+});
+
+app.post('/api/cart/clear', (req, res) => {
+	let items = readJson(ITEMS_PATH);
+	items = items.filter((it) => !it.checked);
+	writeJson(ITEMS_PATH, items);
+	res.json({ ok: true });
 });
 
 // ================== テンプレート API ==================
 
-// テンプレート一覧取得
 app.get('/api/template', (req, res) => {
-	res.json(readTemplate());
+	res.json(readJson(TEMPLATE_PATH));
 });
 
-// テンプレートに追加
 app.post('/api/template', (req, res) => {
-	const name = (req.body?.name || '').trim();
-	if (!name) {
-		return res.status(400).json({ error: '商品名を入力してください。' });
-	}
-	const template = readTemplate();
-	const newItem = { id: crypto.randomUUID(), name };
+	const template = readJson(TEMPLATE_PATH);
+	const newItem = {
+		id: crypto.randomUUID(),
+		name: req.body.name,
+	};
 	template.push(newItem);
-	writeTemplate(template);
-	res.status(201).json(newItem);
+	writeJson(TEMPLATE_PATH, template);
+	res.json(newItem);
 });
 
-// テンプレート項目の名前を編集
+app.put('/api/template/reorder', (req, res) => {
+	writeJson(TEMPLATE_PATH, req.body);
+	res.json(req.body);
+});
+
 app.patch('/api/template/:id', (req, res) => {
-	const template = readTemplate();
-	const item = template.find((it) => it.id === req.params.id);
-	if (!item) {
-		return res.status(404).json({ error: 'テンプレート項目が見つかりません。' });
-	}
-	const name = (req.body?.name || '').trim();
-	if (!name) {
-		return res.status(400).json({ error: '商品名を入力してください。' });
-	}
-	item.name = name;
-	writeTemplate(template);
-	res.json(item);
-});
-
-// テンプレート項目を削除
-app.delete('/api/template/:id', (req, res) => {
-	const template = readTemplate();
-	const next = template.filter((it) => it.id !== req.params.id);
-	writeTemplate(next);
-	res.status(204).end();
-});
-
-// テンプレートを買い物リストにコピー
-app.post('/api/template/copy', (req, res) => {
-	const template = readTemplate();
-	const items = readItems();
-	const existingNames = new Set(items.map((it) => it.name));
-	template.forEach((tpl) => {
-		if (existingNames.has(tpl.name)) return;
-		items.push({
-			id: crypto.randomUUID(),
-			name: tpl.name,
-			quantity: tpl.quantity || 1,
-			checked: false,
-			createdAt: Date.now(),
-		});
-		existingNames.add(tpl.name);
+	let template = readJson(TEMPLATE_PATH);
+	template = template.map((it) => {
+		if (it.id === req.params.id) {
+			return { ...it, ...req.body };
+		}
+		return it;
 	});
-	writeItems(items);
+	writeJson(TEMPLATE_PATH, template);
+	res.json({ ok: true });
+});
+
+app.delete('/api/template/:id', (req, res) => {
+	let template = readJson(TEMPLATE_PATH);
+	template = template.filter((it) => it.id !== req.params.id);
+	writeJson(TEMPLATE_PATH, template);
+	res.json({ ok: true });
+});
+
+app.post('/api/template/copy', (req, res) => {
+	const template = readJson(TEMPLATE_PATH);
+	let items = readJson(ITEMS_PATH);
+
+	const existingNames = new Set(items.filter((it) => !it.checked).map((it) => it.name));
+
+	template.forEach((tpl) => {
+		if (!existingNames.has(tpl.name)) {
+			items.push({
+				id: crypto.randomUUID(),
+				name: tpl.name,
+				quantity: 1,
+				checked: false,
+			});
+		}
+	});
+
+	writeJson(ITEMS_PATH, items);
 	res.json(items);
 });
 

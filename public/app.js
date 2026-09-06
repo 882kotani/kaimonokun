@@ -24,9 +24,17 @@ let lastItemsJson = '';
 let editingItemId = null;
 let editingTemplateId = null;
 
-// ドラッグ状態管理
+// 買い物リスト用 ドラッグ状態管理
 let draggedIndex = null;
 let touchDraggedIndex = null;
+let touchTimer = null;
+let isLongPress = false;
+
+// テンプレート用 ドラッグ状態管理
+let tplDraggedIndex = null;
+let tplTouchDraggedIndex = null;
+let tplTouchTimer = null;
+let tplIsLongPress = false;
 
 function setSyncOk(ok) {
 	syncStatusEl.textContent = ok ? '同期中' : '同期エラー';
@@ -60,7 +68,7 @@ function buildListRow(it, index) {
 	row.className = 'item-row' + (it.checked ? ' checked-row' : '');
 	row.draggable = true;
 
-	// --- PC用ドラッグ＆ドロップ (マウス操作) ---
+	// PC用ドラッグ
 	row.addEventListener('dragstart', (e) => {
 		draggedIndex = index;
 		row.classList.add('dragging');
@@ -91,17 +99,26 @@ function buildListRow(it, index) {
 
 	row.addEventListener('dragend', () => {
 		row.classList.remove('dragging');
-		document.querySelectorAll('.item-row').forEach((r) => r.classList.remove('drag-over'));
+		document
+			.querySelectorAll('#listItems .item-row')
+			.forEach((r) => r.classList.remove('drag-over'));
 	});
 
-	// --- スマホ用ドラッグ＆ドロップ (タッチ操作) ---
+	// スマホ用長押しドラッグ
 	row.addEventListener(
 		'touchstart',
 		(e) => {
-			// ボタンやチェックボックス、入力欄の操作時はドラッグを開始しない
 			if (e.target.closest('.checkbox, .qty-control, .edit-btn, .trash, button, input')) return;
-			touchDraggedIndex = index;
-			row.classList.add('dragging');
+
+			touchDraggedIndex = null;
+			isLongPress = false;
+
+			touchTimer = setTimeout(() => {
+				isLongPress = true;
+				touchDraggedIndex = index;
+				row.classList.add('dragging');
+				if (navigator.vibrate) navigator.vibrate(40);
+			}, 300);
 		},
 		{ passive: true },
 	);
@@ -109,39 +126,64 @@ function buildListRow(it, index) {
 	row.addEventListener(
 		'touchmove',
 		(e) => {
-			if (touchDraggedIndex === null) return;
-			const touch = e.touches[0];
-			const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-			const targetRow = targetEl ? targetEl.closest('.item-row') : null;
+			if (!isLongPress) {
+				clearTimeout(touchTimer);
+				return;
+			}
 
-			document.querySelectorAll('.item-row').forEach((r) => r.classList.remove('drag-over'));
-			if (targetRow && targetRow !== row) {
-				targetRow.classList.add('drag-over');
+			if (touchDraggedIndex !== null) {
+				if (e.cancelable) e.preventDefault();
+
+				const touch = e.touches[0];
+				const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+				const targetRow = targetEl ? targetEl.closest('#listItems .item-row') : null;
+
+				document
+					.querySelectorAll('#listItems .item-row')
+					.forEach((r) => r.classList.remove('drag-over'));
+				if (targetRow && targetRow !== row) {
+					targetRow.classList.add('drag-over');
+				}
 			}
 		},
-		{ passive: true },
+		{ passive: false },
 	);
 
 	row.addEventListener('touchend', async (e) => {
-		if (touchDraggedIndex === null) return;
-		row.classList.remove('dragging');
+		clearTimeout(touchTimer);
 
-		const changedTouch = e.changedTouches[0];
-		const targetEl = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
-		const targetRow = targetEl ? targetEl.closest('.item-row') : null;
+		if (touchDraggedIndex !== null) {
+			row.classList.remove('dragging');
+			const changedTouch = e.changedTouches[0];
+			const targetEl = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+			const targetRow = targetEl ? targetEl.closest('#listItems .item-row') : null;
 
-		document.querySelectorAll('.item-row').forEach((r) => r.classList.remove('drag-over'));
+			document
+				.querySelectorAll('#listItems .item-row')
+				.forEach((r) => r.classList.remove('drag-over'));
 
-		if (targetRow) {
-			const targetIndex = Array.from(listItemsEl.children).indexOf(targetRow);
-			if (targetIndex !== -1 && touchDraggedIndex !== targetIndex) {
-				const [movedItem] = items.splice(touchDraggedIndex, 1);
-				items.splice(targetIndex, 0, movedItem);
-				renderBoard();
-				await saveReorder();
+			if (targetRow) {
+				const targetIndex = Array.from(listItemsEl.children).indexOf(targetRow);
+				if (targetIndex !== -1 && touchDraggedIndex !== targetIndex) {
+					const [movedItem] = items.splice(touchDraggedIndex, 1);
+					items.splice(targetIndex, 0, movedItem);
+					renderBoard();
+					await saveReorder();
+				}
 			}
 		}
 		touchDraggedIndex = null;
+		isLongPress = false;
+	});
+
+	row.addEventListener('touchcancel', () => {
+		clearTimeout(touchTimer);
+		row.classList.remove('dragging');
+		document
+			.querySelectorAll('#listItems .item-row')
+			.forEach((r) => r.classList.remove('drag-over'));
+		touchDraggedIndex = null;
+		isLongPress = false;
 	});
 
 	if (editingItemId === it.id) {
@@ -412,14 +454,133 @@ function renderTemplate() {
 		templateItemsEl.appendChild(empty);
 		return;
 	}
-	template.forEach((tpl) => {
-		templateItemsEl.appendChild(buildTemplateRow(tpl));
+	template.forEach((tpl, index) => {
+		templateItemsEl.appendChild(buildTemplateRow(tpl, index));
 	});
 }
 
-function buildTemplateRow(tpl) {
+function buildTemplateRow(tpl, index) {
 	const row = document.createElement('div');
 	row.className = 'item-row';
+	row.draggable = true;
+
+	// PC用ドラッグ
+	row.addEventListener('dragstart', (e) => {
+		tplDraggedIndex = index;
+		row.classList.add('dragging');
+		e.dataTransfer.effectAllowed = 'move';
+	});
+
+	row.addEventListener('dragover', (e) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+		row.classList.add('drag-over');
+	});
+
+	row.addEventListener('dragleave', () => {
+		row.classList.remove('drag-over');
+	});
+
+	row.addEventListener('drop', async (e) => {
+		e.preventDefault();
+		row.classList.remove('drag-over');
+		if (tplDraggedIndex !== null && tplDraggedIndex !== index) {
+			const [movedItem] = template.splice(tplDraggedIndex, 1);
+			template.splice(index, 0, movedItem);
+			renderTemplate();
+			await saveTemplateReorder();
+		}
+		tplDraggedIndex = null;
+	});
+
+	row.addEventListener('dragend', () => {
+		row.classList.remove('dragging');
+		document
+			.querySelectorAll('#templateItems .item-row')
+			.forEach((r) => r.classList.remove('drag-over'));
+	});
+
+	// スマホ用長押しドラッグ
+	row.addEventListener(
+		'touchstart',
+		(e) => {
+			if (e.target.closest('.edit-btn, .trash, button, input')) return;
+
+			tplTouchDraggedIndex = null;
+			tplIsLongPress = false;
+
+			tplTouchTimer = setTimeout(() => {
+				tplIsLongPress = true;
+				tplTouchDraggedIndex = index;
+				row.classList.add('dragging');
+				if (navigator.vibrate) navigator.vibrate(40);
+			}, 300);
+		},
+		{ passive: true },
+	);
+
+	row.addEventListener(
+		'touchmove',
+		(e) => {
+			if (!tplIsLongPress) {
+				clearTimeout(tplTouchTimer);
+				return;
+			}
+
+			if (tplTouchDraggedIndex !== null) {
+				if (e.cancelable) e.preventDefault();
+
+				const touch = e.touches[0];
+				const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+				const targetRow = targetEl ? targetEl.closest('#templateItems .item-row') : null;
+
+				document
+					.querySelectorAll('#templateItems .item-row')
+					.forEach((r) => r.classList.remove('drag-over'));
+				if (targetRow && targetRow !== row) {
+					targetRow.classList.add('drag-over');
+				}
+			}
+		},
+		{ passive: false },
+	);
+
+	row.addEventListener('touchend', async (e) => {
+		clearTimeout(tplTouchTimer);
+
+		if (tplTouchDraggedIndex !== null) {
+			row.classList.remove('dragging');
+			const changedTouch = e.changedTouches[0];
+			const targetEl = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+			const targetRow = targetEl ? targetEl.closest('#templateItems .item-row') : null;
+
+			document
+				.querySelectorAll('#templateItems .item-row')
+				.forEach((r) => r.classList.remove('drag-over'));
+
+			if (targetRow) {
+				const targetIndex = Array.from(templateItemsEl.children).indexOf(targetRow);
+				if (targetIndex !== -1 && tplTouchDraggedIndex !== targetIndex) {
+					const [movedItem] = template.splice(tplTouchDraggedIndex, 1);
+					template.splice(targetIndex, 0, movedItem);
+					renderTemplate();
+					await saveTemplateReorder();
+				}
+			}
+		}
+		tplTouchDraggedIndex = null;
+		tplIsLongPress = false;
+	});
+
+	row.addEventListener('touchcancel', () => {
+		clearTimeout(tplTouchTimer);
+		row.classList.remove('dragging');
+		document
+			.querySelectorAll('#templateItems .item-row')
+			.forEach((r) => r.classList.remove('drag-over'));
+		tplTouchDraggedIndex = null;
+		tplIsLongPress = false;
+	});
 
 	if (editingTemplateId === tpl.id) {
 		const form = document.createElement('form');
@@ -505,6 +666,20 @@ async function addTemplateItem(name) {
 		});
 		if (!res.ok) throw new Error('failed');
 		await fetchTemplate();
+	} catch (e) {
+		setSyncOk(false);
+	}
+}
+
+async function saveTemplateReorder() {
+	try {
+		const res = await fetch('/api/template/reorder', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(template),
+		});
+		if (!res.ok) throw new Error('failed');
+		setSyncOk(true);
 	} catch (e) {
 		setSyncOk(false);
 	}
