@@ -18,6 +18,8 @@ const templateAddForm = document.getElementById('templateAddForm');
 const templateAddInput = document.getElementById('templateAddInput');
 const copyTemplateBtn = document.getElementById('copyTemplateBtn');
 const addSelectedTemplateBtn = document.getElementById('addSelectedTemplateBtn');
+const selectAllTemplateBtn = document.getElementById('selectAllTemplateBtn');
+const deselectAllTemplateBtn = document.getElementById('deselectAllTemplateBtn');
 
 let items = [];
 let template = [];
@@ -861,6 +863,20 @@ copyTemplateBtn.addEventListener('click', () => {
 if (addSelectedTemplateBtn) {
 	addSelectedTemplateBtn.addEventListener('click', () => {
 		copyTemplateToList();
+	});
+}
+
+if (selectAllTemplateBtn) {
+	selectAllTemplateBtn.addEventListener('click', () => {
+		template.forEach((t) => selectedTemplateIds.add(t.id));
+		renderTemplate();
+	});
+}
+
+if (deselectAllTemplateBtn) {
+	deselectAllTemplateBtn.addEventListener('click', () => {
+		selectedTemplateIds.clear();
+		renderTemplate();
 	});
 }
 

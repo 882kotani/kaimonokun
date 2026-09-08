@@ -445,7 +445,14 @@ body {
 .modal-content .hint {
 	font-size: 13px;
 	color: #6b6f5e;
-	margin: 0 0 16px;
+	margin: 0 0 8px;
+}
+
+.template-select-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-bottom: 8px;
 }
 
 .modal-content .items {
