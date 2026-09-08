@@ -504,7 +504,7 @@ function buildTemplateRow(tpl, index) {
 	row.addEventListener(
 		'touchstart',
 		(e) => {
-			if (e.target.closest('.edit-btn, .trash, button, input')) return;
+			if (e.target.closest('.qty-control, .edit-btn, .trash, button, input')) return;
 
 			tplTouchDraggedIndex = null;
 			tplIsLongPress = false;
@@ -624,6 +624,39 @@ function buildTemplateRow(tpl, index) {
 	name.className = 'item-name';
 	name.textContent = tpl.name;
 
+	const qtyControl = document.createElement('div');
+	qtyControl.className = 'qty-control';
+
+	const minusBtn = document.createElement('button');
+	minusBtn.className = 'qty-btn minus';
+	minusBtn.textContent = '−';
+	minusBtn.setAttribute('aria-label', `${tpl.name}の個数を減らす`);
+	minusBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const currentQty = tpl.quantity || 1;
+		if (currentQty > 1) {
+			updateTemplateQuantity(tpl.id, currentQty - 1);
+		}
+	});
+
+	const qtyVal = document.createElement('span');
+	qtyVal.className = 'qty-val';
+	qtyVal.textContent = String(tpl.quantity || 1);
+
+	const plusBtn = document.createElement('button');
+	plusBtn.className = 'qty-btn plus';
+	plusBtn.textContent = '＋';
+	plusBtn.setAttribute('aria-label', `${tpl.name}の個数を増やす`);
+	plusBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const currentQty = tpl.quantity || 1;
+		updateTemplateQuantity(tpl.id, currentQty + 1);
+	});
+
+	qtyControl.appendChild(minusBtn);
+	qtyControl.appendChild(qtyVal);
+	qtyControl.appendChild(plusBtn);
+
 	const editBtn = document.createElement('button');
 	editBtn.className = 'edit-btn';
 	editBtn.textContent = '編集';
@@ -639,6 +672,7 @@ function buildTemplateRow(tpl, index) {
 	trash.addEventListener('click', () => removeTemplateItem(tpl.id));
 
 	row.appendChild(name);
+	row.appendChild(qtyControl);
 	row.appendChild(editBtn);
 	row.appendChild(trash);
 	return row;
@@ -666,6 +700,21 @@ async function addTemplateItem(name) {
 		});
 		if (!res.ok) throw new Error('failed');
 		await fetchTemplate();
+	} catch (e) {
+		setSyncOk(false);
+	}
+}
+
+async function updateTemplateQuantity(id, quantity) {
+	template = template.map((it) => (it.id === id ? { ...it, quantity } : it));
+	renderTemplate();
+	try {
+		const res = await fetch(`/api/template/${id}`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ quantity }),
+		});
+		if (!res.ok) throw new Error('failed');
 	} catch (e) {
 		setSyncOk(false);
 	}

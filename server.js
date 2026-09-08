@@ -100,6 +100,7 @@ app.post('/api/template', (req, res) => {
 	const newItem = {
 		id: crypto.randomUUID(),
 		name: req.body.name,
+		quantity: 1,
 	};
 	template.push(newItem);
 	writeJson(TEMPLATE_PATH, template);
@@ -141,7 +142,7 @@ app.post('/api/template/copy', (req, res) => {
 			items.push({
 				id: crypto.randomUUID(),
 				name: tpl.name,
-				quantity: 1,
+				quantity: tpl.quantity || 1,
 				checked: false,
 			});
 		}
