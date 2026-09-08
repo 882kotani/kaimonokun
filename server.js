@@ -134,10 +134,14 @@ app.delete('/api/template/:id', (req, res) => {
 app.post('/api/template/copy', (req, res) => {
 	const template = readJson(TEMPLATE_PATH);
 	let items = readJson(ITEMS_PATH);
+	const selectedIds = req.body && Array.isArray(req.body.ids) ? req.body.ids : null;
 
 	const existingNames = new Set(items.filter((it) => !it.checked).map((it) => it.name));
 
 	template.forEach((tpl) => {
+		if (selectedIds && !selectedIds.includes(tpl.id)) {
+			return;
+		}
 		if (!existingNames.has(tpl.name)) {
 			items.push({
 				id: crypto.randomUUID(),

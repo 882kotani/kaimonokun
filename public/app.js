@@ -17,12 +17,14 @@ const templateItemsEl = document.getElementById('templateItems');
 const templateAddForm = document.getElementById('templateAddForm');
 const templateAddInput = document.getElementById('templateAddInput');
 const copyTemplateBtn = document.getElementById('copyTemplateBtn');
+const addSelectedTemplateBtn = document.getElementById('addSelectedTemplateBtn');
 
 let items = [];
 let template = [];
 let lastItemsJson = '';
 let editingItemId = null;
 let editingTemplateId = null;
+let selectedTemplateIds = new Set();
 
 // 買い物リスト用 ドラッグ状態管理
 let draggedIndex = null;
@@ -504,7 +506,7 @@ function buildTemplateRow(tpl, index) {
 	row.addEventListener(
 		'touchstart',
 		(e) => {
-			if (e.target.closest('.qty-control, .edit-btn, .trash, button, input')) return;
+			if (e.target.closest('.checkbox, .qty-control, .edit-btn, .trash, button, input')) return;
 
 			tplTouchDraggedIndex = null;
 			tplIsLongPress = false;
@@ -620,6 +622,37 @@ function buildTemplateRow(tpl, index) {
 		return row;
 	}
 
+	// 選択用チェックボックス
+	const isSelected = selectedTemplateIds.has(tpl.id);
+	const box = document.createElement('div');
+	box.className = 'checkbox' + (isSelected ? ' checked' : '');
+	box.setAttribute('role', 'checkbox');
+	box.setAttribute('aria-checked', String(isSelected));
+	box.tabIndex = 0;
+	if (isSelected) {
+		box.innerHTML =
+			'<svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+	}
+	box.addEventListener('click', (e) => {
+		e.stopPropagation();
+		if (selectedTemplateIds.has(tpl.id)) {
+			selectedTemplateIds.delete(tpl.id);
+		} else {
+			selectedTemplateIds.add(tpl.id);
+		}
+		renderTemplate();
+	});
+	box.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			if (selectedTemplateIds.has(tpl.id)) {
+				selectedTemplateIds.delete(tpl.id);
+			} else {
+				selectedTemplateIds.add(tpl.id);
+			}
+			renderTemplate();
+		}
+	});
+
 	const name = document.createElement('span');
 	name.className = 'item-name';
 	name.textContent = tpl.name;
@@ -671,6 +704,7 @@ function buildTemplateRow(tpl, index) {
 	trash.textContent = '×';
 	trash.addEventListener('click', () => removeTemplateItem(tpl.id));
 
+	row.appendChild(box);
 	row.appendChild(name);
 	row.appendChild(qtyControl);
 	row.appendChild(editBtn);
@@ -685,6 +719,8 @@ async function fetchTemplate() {
 		const res = await fetch('/api/template');
 		if (!res.ok) throw new Error('failed');
 		template = await res.json();
+		// デフォルトで全項目を選択状態にする
+		template.forEach((t) => selectedTemplateIds.add(t.id));
 		renderTemplate();
 	} catch (e) {
 		setSyncOk(false);
@@ -759,9 +795,19 @@ async function removeTemplateItem(id) {
 }
 
 async function copyTemplateToList() {
+	const ids = Array.from(selectedTemplateIds);
+	if (ids.length === 0) {
+		alert('追加する項目が選択されていません。');
+		return;
+	}
 	try {
-		const res = await fetch('/api/template/copy', { method: 'POST' });
+		const res = await fetch('/api/template/copy', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ids }),
+		});
 		if (!res.ok) throw new Error('failed');
+		templateModal.hidden = true;
 		lastItemsJson = '';
 		await fetchItems();
 	} catch (e) {
@@ -808,10 +854,15 @@ templateAddForm.addEventListener('submit', (e) => {
 });
 
 copyTemplateBtn.addEventListener('click', () => {
-	if (confirm('テンプレートの項目をリストに追加しますか？')) {
-		copyTemplateToList();
-	}
+	templateModal.hidden = false;
+	fetchTemplate();
 });
+
+if (addSelectedTemplateBtn) {
+	addSelectedTemplateBtn.addEventListener('click', () => {
+		copyTemplateToList();
+	});
+}
 
 // ================== 初期化 ==================
 

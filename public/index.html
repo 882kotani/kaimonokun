@@ -51,12 +51,14 @@
   <div class="modal-overlay" id="templateModal" hidden>
     <div class="modal-content">
       <div class="modal-header">
-        <h2>テンプレートの編集</h2>
+        <h2>テンプレートの編集・追加</h2>
         <button class="close-modal-btn" id="closeTemplateBtn">×</button>
       </div>
-      <p class="hint">よく買うものを登録しておくと、ワンタップでリストに追加できます。</p>
+      <p class="hint">追加したい項目にチェックを入れて「リストに追加」を押してください。</p>
 
       <div class="items" id="templateItems"></div>
+
+      <button class="ghost-btn full primary-btn" id="addSelectedTemplateBtn">選択した項目をリストに追加</button>
 
       <form class="add-bar small" id="templateAddForm">
         <input type="text" id="templateAddInput" placeholder="テンプレートに追加" autocomplete="off" />
